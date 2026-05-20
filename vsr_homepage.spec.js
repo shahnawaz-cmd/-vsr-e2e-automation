@@ -180,6 +180,43 @@ class Stickers {
       console.log(`VIN decode time for ${vin} (Stickers): ${decodeTime}s`);
     });
   }
+
+  async verifyLPDecode() {
+    const basePlate = 'HBL121';
+    const randomDigit = Math.floor(Math.random() * 10).toString();
+    const plate = basePlate + randomDigit;
+
+    await test.step('Navigate to Window Stickers page with Retry', async () => {
+      let retries = 1;
+      while (retries >= 0) {
+        await this.page.goto('https://vsr.accessautohistory.com/window-stickers');
+        try {
+          await expect(this.page).toHaveURL(/.*window-stickers/);
+          break;
+        } catch (e) {
+          if (retries === 0) throw e;
+          retries--;
+        }
+      }
+    });
+
+    await test.step(`Search with plate: ${plate}`, async () => {
+      await this.page.getByRole('tab', { name: 'By License Plate' }).click();
+      await this.page.getByRole('textbox', { name: 'Enter License Plate' }).fill(plate);
+      await this.page.getByRole('combobox', { name: 'State' }).click();
+      await this.page.getByRole('combobox', { name: 'State' }).fill('texas');
+      await this.page.getByRole('option', { name: 'Texas TX' }).click();
+      
+      const startTime = Date.now();
+      await this.page.getByRole('button', { name: 'Search License Plate' }).click();
+      
+      await this.page.waitForURL(/.*\/vin-check\/(ws-)?license-preview/);
+      
+      const endTime = Date.now();
+      const decodeTime = (endTime - startTime) / 1000;
+      console.log(`License Plate decode time for ${plate} (Stickers): ${decodeTime}s`);
+    });
+  }
 }
 
 test.describe('VSR Homepage Functional QA', () => {
@@ -226,6 +263,11 @@ test.describe('VSR Homepage Functional QA', () => {
   test('Case 5: LP Verification', async ({ page }) => {
     const homepageVHR = new HomepageVHR(page);
     await homepageVHR.verifyLPDecode();
+  });
+
+  test('Case 5: LP Verification for Stickers', async ({ page }) => {
+    const stickers = new Stickers(page);
+    await stickers.verifyLPDecode();
   });
 });
 
