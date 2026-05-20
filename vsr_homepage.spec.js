@@ -120,6 +120,33 @@ class HomepageVHR {
       console.log(`License Plate decode time for ${plate}: ${decodeTime}s`);
     });
   }
+  async verifyRevisitBanner() {
+    const baseVIN = '4JGDA5HB4HA985664';
+    const characters = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';
+    
+    // Swap last or second-to-last character
+    let vinArray = baseVIN.split('');
+    const indexToModify = Math.random() > 0.5 ? 16 : 15;
+    vinArray[indexToModify] = characters.charAt(Math.floor(Math.random() * characters.length));
+    const vin = vinArray.join('');
+
+    await test.step('Search VIN to trigger revisit banner', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/');
+      await this.page.getByRole('tab', { name: 'By VIN' }).click();
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).fill(vin);
+      await this.page.getByRole('button', { name: 'Search VIN' }).click();
+      await this.page.waitForLoadState('networkidle');
+    });
+
+    await test.step('Verify and click Revisit Banner', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/');
+      
+      // Robust locator for the dynamic 'Grab it for only' button
+      const grabItButton = this.page.getByRole('button', { name: /Grab it for only/ });
+      await expect(grabItButton).toBeVisible({ timeout: 15000 });
+      await grabItButton.click();
+    });
+  }
 }
 
 class Stickers {
@@ -268,6 +295,11 @@ test.describe('VSR Homepage Functional QA', () => {
   test('Case 5: LP Verification for Stickers', async ({ page }) => {
     const stickers = new Stickers(page);
     await stickers.verifyLPDecode();
+  });
+
+  test('Case 6: Revisit Banner Verification', async ({ page }) => {
+    const homepageVHR = new HomepageVHR(page);
+    await homepageVHR.verifyRevisitBanner();
   });
 });
 
