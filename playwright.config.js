@@ -8,10 +8,10 @@ module.exports = defineConfig({
   ],
   use: {
     headless: true,
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    screenshot: 'on',
+    video: 'on',
+    trace: 'on',
   },
   fullyParallel: true,
-  workers: '50%',
+  workers: 2,
 });

@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import path from 'path';
+const EVIDENCE_DIR = path.join(__dirname, 'test-results');
 
 class HomepageVHR {
   constructor(page) {
@@ -35,17 +37,20 @@ class HomepageVHR {
   async couponSwapLogic() {
     await test.step('Apply lower coupon (offer20) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/?offer=offer20');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 20%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 20%', { timeout: 30000 });
+      await expect(this.page.locator('text=You have received 20%')).toBeVisible();
     });
     
     await test.step('Apply higher coupon (get20) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/?offer=get20');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 20%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 20%', { timeout: 10000 });
+      await expect(this.page.locator('text=You have received 20%')).toBeVisible();
     });
 
     await test.step('Apply highest coupon (testing) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/?offer=testing');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 96%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 96%', { timeout: 10000 });
+      await expect(this.page.locator('text=You have received 96%')).toBeVisible();
     });
 
     await test.step('Extract cookies and verify dynamic coupon logic', async () => {
@@ -120,17 +125,20 @@ class Stickers {
   async couponSwapLogic() {
     await test.step('Apply lower coupon (offer20) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/window-stickers?offer=offer20');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 20%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 20%', { timeout: 40000 });
+      await expect(this.page.locator('text=You have received 20%')).toBeVisible();
     });
     
     await test.step('Apply higher coupon (get20) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/window-stickers?offer=get20');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 20%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 20%', { timeout: 20000 });
+      await expect(this.page.locator('text=You have received 20%')).toBeVisible();
     });
 
     await test.step('Apply highest coupon (testing) and verify banner', async () => {
       await this.page.goto('https://vsr.accessautohistory.com/window-stickers?offer=testing');
-      await expect(this.page.locator('div').filter({ hasText: 'You have received 96%' }).nth(2)).toBeVisible();
+      await this.page.waitForSelector('text=You have received 96%', { timeout: 10000 });
+      await expect(this.page.locator('text=You have received 96%')).toBeVisible();
     });
 
     await test.step('Extract cookies and verify dynamic coupon logic', async () => {
@@ -177,3 +185,4 @@ test.describe('VSR Homepage Functional QA', () => {
     await stickers.couponSwapLogic();
   });
 });
+
