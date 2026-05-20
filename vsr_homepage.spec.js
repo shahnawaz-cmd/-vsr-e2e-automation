@@ -51,6 +51,38 @@ class HomepageVHR {
   async couponSwapLogic() {
     // ... (keep original coupon logic)
   }
+
+  async decode17CharVIN() {
+    const baseVIN = 'WDDZF4JB0HA182257';
+    const characters = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';
+    
+    // Swap last or second-to-last character
+    let vinArray = baseVIN.split('');
+    const indexToModify = Math.random() > 0.5 ? 16 : 15;
+    vinArray[indexToModify] = characters.charAt(Math.floor(Math.random() * characters.length));
+    const vin = vinArray.join('');
+
+    await test.step('Navigate to Homepage', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/');
+    });
+
+    await test.step(`Search with modified VIN: ${vin}`, async () => {
+      await this.page.getByRole('tab', { name: 'By VIN' }).click();
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).click();
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).fill(vin);
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).press('Tab');
+      
+      const startTime = Date.now();
+      await this.page.getByRole('button', { name: 'Search VIN' }).click();
+      
+      // Ensure navigation to preview page
+      await this.page.waitForURL(/.*\/vin-check\/preview/);
+      
+      const endTime = Date.now();
+      const decodeTime = (endTime - startTime) / 1000;
+      console.log(`VIN decode time for ${vin}: ${decodeTime}s`);
+    });
+  }
 }
 
 class Stickers {
@@ -79,23 +111,57 @@ class Stickers {
   async couponSwapLogic() {
     // ... (keep original sticker coupon logic)
   }
+
+  async decode17CharVIN() {
+    const baseVIN = 'WDDZF4JB0HA182257';
+    const characters = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789';
+    
+    // Swap last or second-to-last character
+    let vinArray = baseVIN.split('');
+    const indexToModify = Math.random() > 0.5 ? 16 : 15;
+    vinArray[indexToModify] = characters.charAt(Math.floor(Math.random() * characters.length));
+    const vin = vinArray.join('');
+
+    await test.step('Navigate to Window Stickers page', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/window-stickers');
+    });
+
+    await test.step(`Search with modified VIN: ${vin}`, async () => {
+      await this.page.getByRole('tab', { name: 'By VIN' }).click();
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).click();
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).fill(vin);
+      await this.page.getByRole('textbox', { name: 'Vehicle Identification Number' }).press('Tab');
+      
+      const startTime = Date.now();
+      await this.page.getByRole('button', { name: 'Search VIN' }).click();
+      
+      // Ensure navigation to sticker preview page
+      await this.page.waitForURL(/.*\/vin-check\/ws-preview/);
+      
+      const endTime = Date.now();
+      const decodeTime = (endTime - startTime) / 1000;
+      console.log(`VIN decode time for ${vin} (Stickers): ${decodeTime}s`);
+    });
+  }
 }
 
 test.describe('VSR Homepage Functional QA', () => {
   test('Case 1: Field validation for VHR', async ({ page }) => {
-  const homepageVHR = new HomepageVHR(page);
-  await homepageVHR.fieldValidationForVHR();
-});
+    const homepageVHR = new HomepageVHR(page);
+    await homepageVHR.fieldValidationForVHR();
+  });
 
-test('Case 3: VIN INPUT Field Lock', async ({ page }) => {
-  const homepageVHR = new HomepageVHR(page);
-  await homepageVHR.fieldValidationForVINLock();
-});
+  test('Case 3: VIN INPUT Field Lock', async ({ page }) => {
+    const homepageVHR = new HomepageVHR(page);
+    await homepageVHR.fieldValidationForVINLock();
+  });
 
-test('Case 3: VIN INPUT Field Lock for Stickers', async ({ page }) => {
+  test('Case 3: VIN INPUT Field Lock for Stickers', async ({ page }) => {
     const stickers = new Stickers(page);
     await stickers.fieldValidationForVINLockSticker();
-  });  test('Case 1: Field validation for Sticker', async ({ page }) => {
+  });
+
+  test('Case 1: Field validation for Sticker', async ({ page }) => {
     const stickers = new Stickers(page);
     await stickers.fieldValidationForSticker();
   });
@@ -108,6 +174,16 @@ test('Case 3: VIN INPUT Field Lock for Stickers', async ({ page }) => {
   test('Case 2: Coupon Swap Logic & Discount Banner Verification for Sticker', async ({ page }) => {
     const stickers = new Stickers(page);
     await stickers.couponSwapLogic();
+  });
+
+  test('Case 4: 17 Character VIN decode', async ({ page }) => {
+    const homepageVHR = new HomepageVHR(page);
+    await homepageVHR.decode17CharVIN();
+  });
+
+  test('Case 4: 17 Character VIN decode for Stickers', async ({ page }) => {
+    const stickers = new Stickers(page);
+    await stickers.decode17CharVIN();
   });
 });
 
