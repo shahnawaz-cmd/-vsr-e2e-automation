@@ -1,0 +1,11 @@
+{
+  "name": "vsr-homepages-functional-qa",
+  "version": "1.0.0",
+  "description": "Functional QA test suite for VSR Homepages.",
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.1"
+  }
+}
