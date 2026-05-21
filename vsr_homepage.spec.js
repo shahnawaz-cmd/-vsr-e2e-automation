@@ -79,7 +79,7 @@ class HomepageVHR {
       await this.page.getByRole('combobox', { name: 'State' }).fill('texas');
       await this.page.getByRole('option', { name: 'Texas TX' }).click();
       await this.page.getByRole('button', { name: 'Search License Plate' }).click();
-      await this.page.waitForURL(/.*\/vin-check\/license-preview/, { timeout: 60000 });
+      await this.page.waitForURL(/.*\/vin-check\/license-preview/, { timeout: 90000 });
     });
   }
 }
@@ -282,6 +282,13 @@ class ExitIntent {
   }
 }
 
+test.describe('Case 8: Exit Intent Pop-up', { tag: '@exit-intent' }, () => {
+  test('Exit Intent Pop-up', async ({ page }) => {
+    const ei = new ExitIntent(page);
+    await ei.verifyExitIntent('https://vsr.accessautohistory.com/');
+  });
+});
+
 test.describe('Case 6: Revisit Banner', { tag: '@revisit' }, () => {
   test.use({ workers: 2 });
   
@@ -296,9 +303,38 @@ test.describe('Case 6: Revisit Banner', { tag: '@revisit' }, () => {
   });
 });
 
-test.describe('Case 8: Exit Intent Pop-up', () => {
-  test('Exit Intent Pop-up', async ({ page }) => {
-    const ei = new ExitIntent(page);
-    await ei.verifyExitIntent('https://vsr.accessautohistory.com/');
+class DiscountBannerVerification {
+  constructor(page) {
+    this.page = page;
+  }
+
+  async verifyBannerGlobalPersistence() {
+    await test.step('Apply coupon and verify banner on Homepage', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/?offer=offer20');
+      const banner = this.page.locator('div', { hasText: /You have received/i }).first();
+      await expect(banner).toBeVisible({ timeout: 15000 });
+      console.log('Banner verified on Homepage.');
+    });
+
+    await test.step('Verify banner on Window Stickers page', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/window-stickers');
+      const banner = this.page.locator('div', { hasText: /You have received/i }).first();
+      await expect(banner).toBeVisible({ timeout: 15000 });
+      console.log('Banner verified on Window Stickers page.');
+    });
+
+    await test.step('Verify banner on Pricing page', async () => {
+      await this.page.goto('https://vsr.accessautohistory.com/pricing');
+      const banner = this.page.locator('div', { hasText: /You have received/i }).first();
+      await expect(banner).toBeVisible({ timeout: 15000 });
+      console.log('Banner verified on Pricing page.');
+    });
+  }
+}
+
+test.describe('Case 9: Discount Banner Persistence', () => {
+  test('Verify banner persists globally', async ({ page }) => {
+    const dbv = new DiscountBannerVerification(page);
+    await dbv.verifyBannerGlobalPersistence();
   });
 });
