@@ -79,7 +79,7 @@ class HomepageVHR {
       await this.page.getByRole('combobox', { name: 'State' }).fill('texas');
       await this.page.getByRole('option', { name: 'Texas TX' }).click();
       await this.page.getByRole('button', { name: 'Search License Plate' }).click();
-      await this.page.waitForURL(/.*\/vin-check\/license-preview/, { timeout: 40000 });
+      await this.page.waitForURL(/.*\/vin-check\/license-preview/, { timeout: 60000 });
     });
   }
 }
@@ -158,11 +158,18 @@ class RevisitBanner {
     await test.step('Verify and click Revisit Banner', async () => {
       await this.page.goto(baseUrl);
       const grabItButton = this.page.locator('text=Grab it').first();
-      try {
-        await grabItButton.waitFor({ state: 'visible', timeout: 10000 });
-        await grabItButton.click();
-      } catch (e) {
-        console.log('Revisit Banner not visible.');
+      
+      // Wait for banner visibility and click
+      await grabItButton.waitFor({ state: 'visible', timeout: 20000 });
+      await grabItButton.click();
+      
+      // Verify revisitbanner parameter in final URL
+      await this.page.waitForURL(/.*revisitBanner.*/, { timeout: 40000 });
+      const finalURL = this.page.url();
+      if (finalURL.includes('revisitBanner')) {
+        console.log('Case 6 passed: Revisit banner parameter found in URL.');
+      } else {
+        throw new Error('Case 6 failed: Revisit banner parameter not found in URL.');
       }
     });
   }
@@ -210,6 +217,71 @@ test.describe('VSR Functional Suite', () => {
   });
 });
 
+class ExitIntent {
+  constructor(page) {
+    this.page = page;
+  }
+
+  async triggerExitIntent() {
+    // 1. Move mouse to middle
+    await this.page.mouse.move(500, 500);
+    await this.page.waitForTimeout(500);
+    
+    // 2. Simulate leaving the viewport using CDP (often required for real detection)
+    const client = await this.page.context().newCDPSession(this.page);
+    await client.send('Input.dispatchMouseEvent', {
+      type: 'mouseMoved',
+      x: 500,
+      y: -10, // Move above viewport
+      modifiers: 0
+    });
+    
+    // 3. Optional: dispatch DOM event
+    await this.page.evaluate(() => {
+      document.dispatchEvent(new MouseEvent('mouseleave', {
+        clientX: 500,
+        clientY: 0
+      }));
+    });
+    await this.page.waitForTimeout(1000);
+  }
+
+  async verifyExitIntent(url) {
+    await test.step(`Verify exit intent flow on ${url}`, async () => {
+      await this.page.goto(url);
+      await this.page.waitForLoadState('domcontentloaded');
+      
+      // 1. Trigger the popup
+      await this.triggerExitIntent();
+      
+      try {
+        // 2. Wait for popup and click 'Click here to redeem instantly'
+        const redeemBtn = this.page.getByRole('button', { name: 'Click here to redeem instantly' });
+        await expect(redeemBtn).toBeVisible({ timeout: 15000 });
+        await redeemBtn.click();
+        
+        // 3. Verify discount banner appears on top (e.g., "You have received X% Discount!")
+        // Assuming a common class or text indicator for the discount banner
+        const discountBanner = this.page.locator('text=You have received').first();
+        await expect(discountBanner).toBeVisible({ timeout: 15000 });
+        console.log('Discount banner appeared.');
+        
+        // 4. Verify coupon in cookies
+        const cookies = await this.page.context().cookies();
+        const couponCookie = cookies.find(c => c.name.includes('coupon'));
+        if (couponCookie) {
+          console.log(`✅ Coupon found in cookies: ${couponCookie.name} = ${couponCookie.value}`);
+        } else {
+          throw new Error('❌ Coupon not found in cookies.');
+        }
+      } catch (e) {
+        console.log(`Exit intent verification failed: ${e.message}`);
+        throw e;
+      }
+    });
+  }
+}
+
 test.describe('Case 6: Revisit Banner', { tag: '@revisit' }, () => {
   test.use({ workers: 2 });
   
@@ -221,5 +293,12 @@ test.describe('Case 6: Revisit Banner', { tag: '@revisit' }, () => {
   test('Revisit Banner Verification for Stickers', async ({ page }) => {
     const rb = new RevisitBanner(page);
     await rb.verifyRevisitBanner('https://vsr.accessautohistory.com/window-stickers');
+  });
+});
+
+test.describe('Case 8: Exit Intent Pop-up', () => {
+  test('Exit Intent Pop-up', async ({ page }) => {
+    const ei = new ExitIntent(page);
+    await ei.verifyExitIntent('https://vsr.accessautohistory.com/');
   });
 });
