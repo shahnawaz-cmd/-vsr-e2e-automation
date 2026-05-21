@@ -13,5 +13,5 @@ module.exports = defineConfig({
     trace: 'on',
   },
   fullyParallel: true,
-  workers: 2,
+  workers: 3,
 });
